@@ -1,11 +1,10 @@
+/* === frontend/style.css === */
 body {
-    margin: 0;
-    overflow: hidden;
-    background-color: #111;
+  margin: 0;
+  overflow: hidden;
+  background-color: #000;
 }
 canvas {
-    display: block;
-    background-color: #111;
-    width: 100vw;
-    height: 100vh;
+  display: block;
+  border: 1px solid #222;
 }

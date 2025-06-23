@@ -1,63 +1,53 @@
-let canvas = document.getElementById("gameCanvas");
-let ctx = canvas.getContext("2d");
+import { canvas, ctx } from './canvas.js';
+import { player, updatePlayerEnergyAndScore } from './player.js';
+import { scene } from './scene.js';
+import { updateForecastWave, drawForecastWave, forecastedWaves } from './waveforecastengine.js';
+import { updateTrail, drawTrail } from './trail.js';
+import { drawMiniMap } from './semanticmaphud.js';
+import { drawHUD } from './hud.js';
 
-let player = {
-    x: 100,
-    y: 300,
-    speed: 2,
-    targetY: 300,
-    chips: 10000,
-    score: 0
-};
-
-// 滑鼠事件
-
-let isMouseDown = false;
-canvas.addEventListener("mousedown", function (e) {
-    isMouseDown = true;
-    player.targetY = e.clientY;
-    console.log("Mouse down at", e.clientY);
+let mouseDown = false;
+canvas.addEventListener("mousedown", (e) => {
+  mouseDown = true;
+  player.targetY = e.clientY;
 });
-canvas.addEventListener("mouseup", function () {
-    isMouseDown = false;
+canvas.addEventListener("mouseup", () => { mouseDown = false; });
+canvas.addEventListener("mousemove", (e) => {
+  if (mouseDown) player.targetY = e.clientY;
 });
-canvas.addEventListener("mousemove", function (e) {
-    if (isMouseDown) {
-        player.targetY = e.clientY;
-        console.log("Moving", e.clientY);
-    }
-});
-
-// 觸控事件（手機用）
-canvas.addEventListener("touchmove", function (e) {
-    let touch = e.touches[0];
-    player.targetY = touch.clientY;
+canvas.addEventListener("touchstart", () => { mouseDown = true; });
+canvas.addEventListener("touchend", () => { mouseDown = false; });
+canvas.addEventListener("touchmove", (e) => {
+  let touch = e.touches[0];
+  player.targetY = touch.clientY;
 });
 
 function update() {
-    if (player.y < player.targetY) player.y += player.speed;
-    if (player.y > player.targetY) player.y -= player.speed;
+  player.update(mouseDown);
+  scene.update();
+  updateForecastWave();
+  updateTrail();
 
-    player.score += 1;
+  const isTouchingWave = forecastedWaves.some(w =>
+    Math.abs(w.x - player.x) < 10 && Math.abs(w.y - player.y) < 10
+  );
+  updatePlayerEnergyAndScore(isTouchingWave);
 }
 
 function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Draw player
-    ctx.fillStyle = "#0f0";
-    ctx.fillRect(player.x - 10, player.y - 10, 20, 20);
-
-    // Draw score
-    ctx.fillStyle = "#fff";
-    ctx.font = "16px sans-serif";
-    ctx.fillText("Score: " + player.score, 10, 20);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  scene.draw(ctx);
+  drawForecastWave();
+  drawTrail();
+  player.draw(ctx);
+  drawMiniMap();
+  drawHUD();
 }
 
-function gameLoop() {
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
 }
 
-gameLoop();
+loop();
